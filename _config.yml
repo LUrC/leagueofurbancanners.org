@@ -1,14 +1,13 @@
 # Site settings
-title: Your awesome title
-email: your-email@domain.com
+title: League of Urban Canners
+# email: your-email@domain.com
 description: > # this means to ignore newlines until "baseurl:"
-  Write an awesome description for your new site here. You can edit this
-  line in _config.yml. It will appear in your document head meta (for
-  Google search results) and in your feed.xml site description.
+  LUrC is an alternative economic model for food production where members of the
+  community work together to produce food for themselves.
 baseurl: "" # the subpath of your site, e.g. /blog/
-url: "http://yourdomain.com" # the base hostname & protocol for your site
-twitter_username: jekyllrb
-github_username:  jekyll
+url: "http://leagueofurbancanners.org" # the base hostname & protocol for your site
+# twitter_username: jekyllrb
+github_username:  lurc
 
 # Build settings
 markdown: kramdown
