@@ -15,3 +15,20 @@ article dd {
   margin-bottom: 25px;
   font-size: 16px;
 }
+
+
+table {
+  border: 1px solid black;
+  border-collapse: collapse;
+  margin-top:10px;
+  margin-bottom:10px;
+}
+th, td {
+  border: 1px solid black;
+  padding: 3px;
+}
+th {
+  font-weight: bold;
+  background-color: #ddd;
+  text-align:center;
+}

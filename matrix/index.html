@@ -1,7 +1,9 @@
 ---
-title: Photos
+title: Matrix
 layout: default
 ---
+
+<h1>Matrix</h1>
 
 <form id="filter" onsubmit="filterFormSubmit();return false;">
 <input type="submit" value="Filter">
@@ -213,3 +215,8 @@ $( "form#filter" ).submit(function( event ) {
   }
 
 </script>
+<style>
+  table#data tr.open {
+    background-color:#8f8;
+  }
+</style>
