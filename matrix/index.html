@@ -1,0 +1,215 @@
+---
+title: Photos
+layout: default
+---
+
+<form id="filter" onsubmit="filterFormSubmit();return false;">
+<input type="submit" value="Filter">
+<button type="reset" value="Clear">Clear</button>
+<img src="/img/ajax-loader.gif" id="spinner" style="border:none;box-shadow:none;width:16px;margin:0px">
+<table id="data">
+<thead></thead>
+<tbody></tbody>
+</table>
+</form>
+
+<script type="text/javascript" src="/js/jquery-1.11.0.js"></script>
+<script type="text/javascript" src="/js/jquery.tablesorter.js"></script> 
+<script type="text/javascript" src="/js/tabletop.js"></script>
+<script type="text/javascript">
+
+  /* google spreadsheet link */
+  var public_spreadsheet_url = 'https://docs.google.com/spreadsheet/pub?hl=en_US&hl=en_US&key=110TWnpfRPu3rRe3zPV-Yp1tLqsMCmyA97rIo_ChBv_E&output=html';
+
+$( "form#filter" ).submit(function( event ) {
+  event.preventDefault();
+  filterFormSubmit();
+  return false;
+});
+
+  var mydata = [];
+  var keys = [ "treeid", "fruit", "zip", "status", "quality" ];
+  var keys_required = [ "fruit", "zip", "status", "quality" ];
+  var key_translate = {
+    "treeid": "Tree ID",
+    "fruit": "Fruit",
+    "zip": "Zip",
+    "status": "Status",
+    "quality": "Quality"
+  };
+  /* the key type can text or select.  "text" means text box, "select" means
+   * drop-down menu.
+   */
+  var key_type = {
+    "treeid": "text",
+    "fruit": "select",
+    "zip": "text",
+    "status": "select",
+    "quality": "select"
+  };
+  var key_values = {};
+
+  var spinner = $('img#spinner');
+
+  window.onload = function() { init() };
+
+  function init() {
+    Tabletop.init( { key: public_spreadsheet_url,
+                     callback: initTable,
+                     simpleSheet: true } )
+  }
+
+  function stylize_row(data, row) {
+    if(data[key_translate["status"]] == "Open") {
+      row.addClass("open");
+    }
+  }
+
+  function generate_table_header() {
+    /* generate header */
+    var tablehead = $("#data thead");
+    tablehead.empty();
+    var header_row = $('<tr></tr>');
+    for(var key in keys) {
+      var col = $('<th></th>').text(key_translate[keys[key]]);
+      header_row.append(col);
+    }
+    tablehead.append(header_row);
+
+    /* generate search row */
+    var tablehead = $("#data thead");
+    var header_row = $('<tr></tr>');
+    for(var key in keys) {
+      var col = $('<td style="text-align:center"></td>');
+      var input;
+      switch(key_type[keys[key]]) {
+      case "select":
+        input = $('<select id="' + keys[key] + '"></select>');
+        var option_none = $('<option value="Any">Any</option>');
+        input.append(option_none);
+        for(var value_i in key_values[keys[key]]) {
+          var value = key_values[keys[key]][value_i]
+          var option = $('<option value="' + value + '">' + value + '</option>');
+          input.append(option);
+        }
+        break;
+      case "text":
+        input = $('<input type="text" size=13 id="' + keys[key] + '"></input>');
+        break;
+      }
+      col.append(input);
+      header_row.append(col);
+    }
+    tablehead.append(header_row);
+  }
+
+  function generate_table_data(data) {
+    /* generate data rows */
+    var tablebody = $("#data tbody");
+    for(r = 0; r < data.length; r++) {
+      var row = $('<tr></tr>');
+      for(var key in key_translate) {
+        var col = $('<td></td>');
+        col.text(data[r][key_translate[key]]);
+        row.append(col);
+      }
+      stylize_row(data[r], row);
+      tablebody.append(row);
+    }
+
+    /* enable sorting */
+    var table = $("#data");
+    table.tablesorter();
+  }
+
+  function collect_values(list) {
+    var values = [];
+    for(var element_i in list) {
+      var element = list[element_i];
+      element = element.trim();
+      if(values.indexOf(element) == -1) {
+        values.push(element);
+      }
+    }
+    return values;
+  }
+
+  function initTable(data) {
+    mydata = data;
+    cleanup_data();
+    parse_data();
+    generate_table_header();
+    generate_table_data(mydata);
+    spinner.css("visibility", "hidden");
+  }
+
+  function parse_data() {
+    for(var key_i in keys) {
+      var key = keys[key_i]
+      var value_list = mydata.map(function(row) { return row[key_translate[key]]; });
+      var unique_values = collect_values(value_list);
+      key_values[key] = unique_values;
+    }
+  }
+
+  function cleanup_data() {
+    var data_nonempty = mydata.filter(function(row) {
+      is_empty = true;
+      for(var key in keys_required) {
+        if(row[key_translate[keys_required[key]]]) {
+          is_empty = false;
+          break;
+        }
+      }
+      return ! is_empty;
+    });
+    mydata = data_nonempty;
+  }
+
+  function filterFormSubmit() {
+    /* enable spinner */
+    spinner.css("visibility","visible");
+
+    /* clear table */
+    var tablebody = $("#data tbody");
+    tablebody.empty();
+
+    filteredData = mydata;
+    for(var key_i in keys) {
+      var key = keys[key_i];
+      var value;
+      switch(key_type[key]) {
+      case "select":
+        var select = $("form#filter select#" + key);
+        value = select.find('option:selected').text()
+        if(value === "Any") {
+          value = undefined;
+        }
+        break;
+      case "text":
+        var filterTextbox = $("form#filter input#" + key);
+        value = filterTextbox.val();
+        if(value === "") {
+          value = undefined;
+        }
+        break;
+      }
+      if(value != undefined) {
+        filteredData = filterBy(key, value, filteredData);
+      }
+    }
+
+    /* disable spinner */
+    spinner.css('visibility',"hidden");
+
+    generate_table_data(filteredData);
+  }
+
+  function filterBy(key, value, data) {
+    var newdata = data.filter(function(row) {
+      return row[key_translate[key]].toLowerCase() === value.trim().toLowerCase();
+    });
+    return newdata;
+  }
+
+</script>
